@@ -12,14 +12,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import processing.core.PVector;
 
 /**
  *
  * @author Luuk
  */
 public class CSVParser {
-    public ArrayList<CartesianCoordinate> parseCSV(String fileLocation) {
-        ArrayList<CartesianCoordinate> returnList = new ArrayList<>();
+    public ArrayList<PVector> parseCSV(String fileLocation) {
+        ArrayList<PVector> returnList = new ArrayList<>();
         String thisLine = null;
         float schoolLocationX = 92800f;
         float schoolLocationY = 436955f;
@@ -38,23 +39,10 @@ public class CSVParser {
                 float yABS = (float) Math.abs(schoolLocationY - Y);
 
                 if (xABS < 500 && yABS < 500) {
-                    CartesianCoordinate CC = new CartesianCoordinate(X, Y, Z);
+                    PVector CC = new PVector(X, Y, Z);
                     returnList.add(CC);
                 }
-                //System.out.println(X + ", " + Y + ", " + Z);
             }
-//            for (int i = 0; i < 10000000; i++) {
-//                thisLine = br.readLine();
-//                String[] lineSplit = thisLine.split(",");
-//            
-//                float X = Float.parseFloat(lineSplit[0]);
-//                float Y = Float.parseFloat(lineSplit[1]);
-//                float Z = Float.parseFloat(lineSplit[2]);
-//
-//                //System.out.println(X + ", " + Y + ", " + Z);
-//                CartesianCoordinate CC = new CartesianCoordinate(X, Y, Z);
-//                returnList.add(CC);
-//            }
         } catch (Exception ex) {
             System.out.println(ex);
         }

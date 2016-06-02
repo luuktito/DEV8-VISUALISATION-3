@@ -8,6 +8,7 @@ package com.easycode.visualisation_3;
 import java.util.ArrayList;
 import processing.core.PApplet;
 import controlP5.*;
+import processing.core.PVector;
 import processing.event.MouseEvent;
 
 /**
@@ -16,7 +17,7 @@ import processing.event.MouseEvent;
  */
 public class Main extends PApplet{
    
-    ArrayList<CartesianCoordinate> coordinatesList;
+    ArrayList<PVector> coordinatesList;
     ArrayList<Float> xMap = new ArrayList<>();
     ArrayList<Float> yMap = new ArrayList<>();
     boolean pauseStatus;
@@ -100,10 +101,10 @@ public class Main extends PApplet{
         CSVParser newParser = new CSVParser();
         coordinatesList = newParser.parseCSV("resource/rotterdamopendata_hoogtebestandtotaal_oost.csv");
 
-        minValueX = calculateMin("X").getxAxis();
-        minValueY = calculateMin("Y").getyAxis();
-        maxValueX = calculateMax("X").getxAxis();
-        maxValueY = calculateMax("Y").getyAxis();
+        minValueX = calculateMin("X").x;
+        minValueY = calculateMin("Y").y;
+        maxValueX = calculateMax("X").x;
+        maxValueY = calculateMax("Y").y;
         
         calculateCoordinates(coordinatesList);
     }
@@ -135,56 +136,56 @@ public class Main extends PApplet{
         }
     }
     
-    public CartesianCoordinate calculateMin(String type) {
-        CartesianCoordinate minValue = null;
+    public PVector calculateMin(String type) {
+        PVector minValue = null;
         if (type.equals("X")) {
-            for (CartesianCoordinate CC : coordinatesList) {
-                minValue = (minValue == null || CC.getxAxis() < minValue.getxAxis()) ? CC:minValue;
+            for (PVector CC : coordinatesList) {
+                minValue = (minValue == null || CC.x < minValue.x) ? CC:minValue;
             }
         }
         else {
-            for (CartesianCoordinate CC : coordinatesList) {
-                minValue = (minValue == null || CC.getyAxis() < minValue.getyAxis()) ? CC:minValue;
+            for (PVector CC : coordinatesList) {
+                minValue = (minValue == null || CC.y < minValue.y) ? CC:minValue;
             }            
         }
         return minValue;
     }
     
-    public CartesianCoordinate calculateMax(String type) {
-        CartesianCoordinate maxValue = null;
+    public PVector calculateMax(String type) {
+        PVector maxValue = null;
         if (type.equals("X")) {
-            for (CartesianCoordinate CC : coordinatesList) {
-                maxValue = (maxValue == null || CC.getxAxis() > maxValue.getxAxis()) ? CC:maxValue;
+            for (PVector CC : coordinatesList) {
+                maxValue = (maxValue == null || CC.x > maxValue.x) ? CC:maxValue;
             }
         }
         else {
-            for (CartesianCoordinate CC : coordinatesList) {
-                maxValue = (maxValue == null || CC.getyAxis() > maxValue.getyAxis()) ? CC:maxValue;
+            for (PVector CC : coordinatesList) {
+                maxValue = (maxValue == null || CC.y > maxValue.y) ? CC:maxValue;
             }            
         }
         return maxValue;
     }
     
-    public void calculateCoordinates(ArrayList<CartesianCoordinate> coordinatesList) {
+    public void calculateCoordinates(ArrayList<PVector> coordinatesList) {
         float xAs = 0.0f;
         float yAs = 0.0f;
-        for (CartesianCoordinate CC : coordinatesList) {
-            xAs = (float) map(CC.getxAxis(), minValueX, maxValueX, 0, (1000));
-            yAs = (float) map(CC.getyAxis(), minValueY, maxValueY, 0, (1000));
+        for (PVector CC : coordinatesList) {
+            xAs = (float) map(CC.x, minValueX, maxValueX, 0, (1000));
+            yAs = (float) map(CC.y, minValueY, maxValueY, 0, (1000));
             xMap.add(xAs);
             yMap.add(yAs);
         }
     }
     
-    public void drawCoordinates(ArrayList<CartesianCoordinate> coordinatesList) {
+    public void drawCoordinates(ArrayList<PVector> coordinatesList) {
 //        System.out.println("STARTING DRAWING");
         noStroke();
         for (int i = 0; i < (coordinatesList.size() - 1); i++) {
-            int c = color((100 + (coordinatesList.get(i).getzAxis() * 20)), (100 + (coordinatesList.get(i).getzAxis() * 20)), (100 + (coordinatesList.get(i).getzAxis() * 20)));
+            int c = color((100 + (coordinatesList.get(i).z * 20)), (100 + (coordinatesList.get(i).z * 20)), (100 + (coordinatesList.get(i).z * 20)));
             fill(c);
             pushMatrix();
             translate((xMap.get(i) - 500f) * scale, (1000f - yMap.get(i) - 500f) * scale, 0);
-            box(2 * scale, 2 * scale, (coordinatesList.get(i).getzAxis() + 10) * 2*scale);
+            box(2 * scale, 2 * scale, (coordinatesList.get(i).z + 10) * 2*scale);
             popMatrix();
         }
 //        System.out.println("DONE DRAWING");
