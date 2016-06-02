@@ -7,6 +7,9 @@ package com.easycode.visualisation_3;
 
 import java.util.ArrayList;
 import processing.core.PApplet;
+import controlP5.*;
+import processing.event.MouseEvent;
+
 /**
  *
  * @author Luuk
@@ -14,58 +17,124 @@ import processing.core.PApplet;
 public class Main extends PApplet{
    
     ArrayList<CartesianCoordinate> coordinatesList;
+    ArrayList<Float> xMap = new ArrayList<>();
+    ArrayList<Float> yMap = new ArrayList<>();
+    boolean pauseStatus;
     float minValueX;
     float minValueY; 
     float maxValueX; 
     float maxValueY; 
+    float scale = 2.0f;
+    float angle = 0;
+//    ControlP5 cp5;
+//    static CallbackListener cb;
     
     public static void main(String[] args) {
-     
         PApplet.main( new String[]{"com.easycode.visualisation_3.Main"} ); 
     }
     
     @Override
     public void settings() {
-        size(1050, 1050);
+        size(1000, 1000, P3D);
+    }
+    
+    public void resetSimulation() {
+    }
+    
+    public void PlayPause() {
+        if (pauseStatus == true) {
+            pauseStatus = false;
+        } else {
+            pauseStatus = true;
+        }
+    }
+     
+    public void takeScreenshot() {
+    }
+
+//    public void controlEvent(ControlEvent event) {
+//        if ("Set to range to 500m".equals(event.getController().getName())) {
+//            scale = 2.0f;
+//            System.out.println("KEY=S");
+//            redrawMap = true;
+//        }
+//        if ("Set to range to 1000m".equals(event.getController().getName())) {
+//            scale = 1f;
+//            System.out.println("KEY=A");
+//            redrawMap = true;
+//        }
+//    }
+    
+    @Override
+    public void mouseDragged() {
+        if (mouseButton == LEFT) {
+            angle =  angle + (radians(-(mouseX- pmouseX))/2);
+        } 
     }
     
     @Override
+    public void mouseWheel(MouseEvent event) {
+        float e = event.getCount();
+        scale = (float) (scale - e/5.0);
+        if (scale < 1)
+            scale = 1;
+        else if (scale > 3)
+            scale = 3;
+    }
+    
+    
+    @Override
     public void setup(){
-        noLoop();
-        background(255,255,255);
+//        cp5 = new ControlP5(this);
+//        
+//        cp5.addButton("Set to range to 500m")
+//                .setPosition(30, 970)
+//                .setWidth(200)
+//                .setValue(1);
+//        cp5.addButton("Set to range to 1000m")
+//                .setPosition(250, 970)
+//                .setWidth(200)
+//                .setValue(1);
+        background(255);
+        
         CSVParser newParser = new CSVParser();
         coordinatesList = newParser.parseCSV("resource/rotterdamopendata_hoogtebestandtotaal_oost.csv");
-        
-//        CartesianCoordinate minX =  coordinatesList
-//                .stream()
-//                .min((v1, v2) -> Float.compare(v1.getxAxis(), v2.getxAxis()))
-//                .get();
-//
-//        CartesianCoordinate minY = coordinatesList
-//                .stream()
-//                .max((o1, o2) -> Float.compare(o1.getY(), o2.getY()))
-//                .get();
-//        CartesianCoordinate maxX =  coordinatesList
-//                .stream()
-//                .min((o1, o2) -> Float.compare(o1.getX(), o2.getX()))
-//                .get();
-//        CartesianCoordinate maxY = coordinatesList
-//                .stream()
-//                .max((o1, o2) -> Float.compare(o1.getY(), o2.getY()))
-//                .get();
-//        
+
         minValueX = calculateMin("X").getxAxis();
         minValueY = calculateMin("Y").getyAxis();
         maxValueX = calculateMax("X").getxAxis();
         maxValueY = calculateMax("Y").getyAxis();
+        
+        calculateCoordinates(coordinatesList);
     }
 
     @Override
     public void draw() {
-        //fill(0);
-        drawCoordinates(coordinatesList);
-    }
+        clear();
+        lights();
+        
+        translate(width/2, height/2);
+        rotateX(1.2f);
+        rotateZ(angle);
        
+        pushMatrix();
+        drawCoordinates(coordinatesList);
+        popMatrix();
+    }
+
+    public void keyPressed() {
+        if (key == 's') {
+            scale = 2.0f;
+            System.out.println("KEY=S");
+            redraw();
+        }
+        if (key == 'a') {
+            scale = 1.0f;
+            System.out.println("KEY=A");
+            redraw();
+        }
+    }
+    
     public CartesianCoordinate calculateMin(String type) {
         CartesianCoordinate minValue = null;
         if (type.equals("X")) {
@@ -96,26 +165,28 @@ public class Main extends PApplet{
         return maxValue;
     }
     
-    public void drawCoordinates(ArrayList<CartesianCoordinate> coordinatesList) {
-        System.out.println("STARTING DRAWING");
+    public void calculateCoordinates(ArrayList<CartesianCoordinate> coordinatesList) {
         float xAs = 0.0f;
         float yAs = 0.0f;
-        strokeWeight((float) 0.0);
-//        for (int i = 0; i < 10; i++) {
-//            xAs = map(coordinatesList.get(i).getxAxis(), 0, 500000f, 0, 1000);
-//            yAs = map(coordinatesList.get(i).getyAxis(), 0, 500000f, 0, 1000);
-//            ellipse(xAs + 25, yAs + 25, 1, 1);
-//        }
         for (CartesianCoordinate CC : coordinatesList) {
-            int c = color(255, (130 + (CC.getzAxis() * 20)), 0);
-            //int c = color(255, 0, 255);
-            fill(c);
-            //System.out.println(CC.getxAxis() + ", " + CC.getyAxis() + ", " + CC.getzAxis());
-            xAs = map(CC.getxAxis(), minValueX, maxValueX, 0, 1000);
-            yAs = map(CC.getyAxis(), minValueY, maxValueY, 0, 1000);
-            //ellipse(xAs + 25, yAs + 25, 1, 1);
-            rect(xAs + 25, yAs + 25, 1, 1);
+            xAs = (float) map(CC.getxAxis(), minValueX, maxValueX, 0, (1000));
+            yAs = (float) map(CC.getyAxis(), minValueY, maxValueY, 0, (1000));
+            xMap.add(xAs);
+            yMap.add(yAs);
         }
-        System.out.println("DONE DRAWING");
+    }
+    
+    public void drawCoordinates(ArrayList<CartesianCoordinate> coordinatesList) {
+//        System.out.println("STARTING DRAWING");
+        noStroke();
+        for (int i = 0; i < (coordinatesList.size() - 1); i++) {
+            int c = color((100 + (coordinatesList.get(i).getzAxis() * 20)), (100 + (coordinatesList.get(i).getzAxis() * 20)), (100 + (coordinatesList.get(i).getzAxis() * 20)));
+            fill(c);
+            pushMatrix();
+            translate((xMap.get(i) - 500f) * scale, (1000f - yMap.get(i) - 500f) * scale, 0);
+            box(2 * scale, 2 * scale, (coordinatesList.get(i).getzAxis() + 10) * 2*scale);
+            popMatrix();
+        }
+//        System.out.println("DONE DRAWING");
     }
 }

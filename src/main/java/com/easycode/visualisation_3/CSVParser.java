@@ -21,6 +21,8 @@ public class CSVParser {
     public ArrayList<CartesianCoordinate> parseCSV(String fileLocation) {
         ArrayList<CartesianCoordinate> returnList = new ArrayList<>();
         String thisLine = null;
+        float schoolLocationX = 92800f;
+        float schoolLocationY = 436955f;
         try {
             System.out.println("STARTING");
             BufferedReader br = new BufferedReader(new FileReader(fileLocation));
@@ -31,10 +33,15 @@ public class CSVParser {
                 float X = Float.parseFloat(lineSplit[0]);
                 float Y = Float.parseFloat(lineSplit[1]);
                 float Z = Float.parseFloat(lineSplit[2]);
+                
+                float xABS = (float) Math.abs(schoolLocationX - X);
+                float yABS = (float) Math.abs(schoolLocationY - Y);
 
+                if (xABS < 500 && yABS < 500) {
+                    CartesianCoordinate CC = new CartesianCoordinate(X, Y, Z);
+                    returnList.add(CC);
+                }
                 //System.out.println(X + ", " + Y + ", " + Z);
-                CartesianCoordinate CC = new CartesianCoordinate(X, Y, Z);
-                returnList.add(CC);
             }
 //            for (int i = 0; i < 10000000; i++) {
 //                thisLine = br.readLine();
@@ -48,7 +55,6 @@ public class CSVParser {
 //                CartesianCoordinate CC = new CartesianCoordinate(X, Y, Z);
 //                returnList.add(CC);
 //            }
-            
         } catch (Exception ex) {
             System.out.println(ex);
         }
