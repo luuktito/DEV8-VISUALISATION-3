@@ -7,7 +7,6 @@ package com.easycode.visualisation_3;
 
 import java.util.ArrayList;
 import processing.core.PApplet;
-import controlP5.*;
 import processing.core.PVector;
 import processing.event.MouseEvent;
 
@@ -20,15 +19,17 @@ public class Main extends PApplet{
     ArrayList<PVector> coordinatesList;
     ArrayList<Float> xMap = new ArrayList<>();
     ArrayList<Float> yMap = new ArrayList<>();
-    boolean pauseStatus;
+    boolean pauseStatus = true;
     float minValueX;
     float minValueY; 
+    float minValueZ;
     float maxValueX; 
     float maxValueY; 
+    float maxValueZ;
     float scale = 2.0f;
     float angle = 0;
-//    ControlP5 cp5;
-//    static CallbackListener cb;
+    float waterHeight = -5f;
+    float timePassed = 0;
     
     public static void main(String[] args) {
         PApplet.main( new String[]{"com.easycode.visualisation_3.Main"} ); 
@@ -38,33 +39,6 @@ public class Main extends PApplet{
     public void settings() {
         size(1000, 1000, P3D);
     }
-    
-    public void resetSimulation() {
-    }
-    
-    public void PlayPause() {
-        if (pauseStatus == true) {
-            pauseStatus = false;
-        } else {
-            pauseStatus = true;
-        }
-    }
-     
-    public void takeScreenshot() {
-    }
-
-//    public void controlEvent(ControlEvent event) {
-//        if ("Set to range to 500m".equals(event.getController().getName())) {
-//            scale = 2.0f;
-//            System.out.println("KEY=S");
-//            redrawMap = true;
-//        }
-//        if ("Set to range to 1000m".equals(event.getController().getName())) {
-//            scale = 1f;
-//            System.out.println("KEY=A");
-//            redrawMap = true;
-//        }
-//    }
     
     @Override
     public void mouseDragged() {
@@ -83,29 +57,15 @@ public class Main extends PApplet{
             scale = 3;
     }
     
-    
     @Override
     public void setup(){
-//        cp5 = new ControlP5(this);
-//        
-//        cp5.addButton("Set to range to 500m")
-//                .setPosition(30, 970)
-//                .setWidth(200)
-//                .setValue(1);
-//        cp5.addButton("Set to range to 1000m")
-//                .setPosition(250, 970)
-//                .setWidth(200)
-//                .setValue(1);
         background(255);
+        textSize(14);
         
         CSVParser newParser = new CSVParser();
         coordinatesList = newParser.parseCSV("resource/rotterdamopendata_hoogtebestandtotaal_oost.csv");
 
-        minValueX = calculateMin("X").x;
-        minValueY = calculateMin("Y").y;
-        maxValueX = calculateMax("X").x;
-        maxValueY = calculateMax("Y").y;
-        
+        calculateMinMax();
         calculateCoordinates(coordinatesList);
     }
 
@@ -113,6 +73,16 @@ public class Main extends PApplet{
     public void draw() {
         clear();
         lights();
+           
+        fill(255);
+        text("Hold left mouse button and drag to rotate the map", 20, 30);
+        text("Scroll to zoom the map in and out", 20, 50);
+        text("Press s to save a screenshot of the simulation", 390, 30);
+        text("Press p to pause/start the simulation", 730, 30);
+        text("Press r to reset the simulation", 730, 50);
+        text("Paused: " + pauseStatus, 730, 70);
+        text("Water height: " + waterHeight + "m", 730, 90);
+        text("Time passed: " + timePassed + " hours", 730, 110);
         
         translate(width/2, height/2);
         rotateX(1.2f);
@@ -120,50 +90,74 @@ public class Main extends PApplet{
        
         pushMatrix();
         drawCoordinates(coordinatesList);
+        drawWaterHeight();
         popMatrix();
     }
 
     public void keyPressed() {
-        if (key == 's') {
-            scale = 2.0f;
-            System.out.println("KEY=S");
+        if (key == 'x') {
+            scale = 3.0f;
+            System.out.println("KEY=X");
             redraw();
         }
-        if (key == 'a') {
+        if (key == 'z') {
             scale = 1.0f;
-            System.out.println("KEY=A");
+            System.out.println("KEY=Z");
             redraw();
         }
-    }
-    
-    public PVector calculateMin(String type) {
-        PVector minValue = null;
-        if (type.equals("X")) {
-            for (PVector CC : coordinatesList) {
-                minValue = (minValue == null || CC.x < minValue.x) ? CC:minValue;
+        if (key == 's') {
+            saveFrame("screenshot-######.png");
+        }
+        if (key == 'p') {
+            if (pauseStatus == true) {
+                pauseStatus = false;
+            } else {
+                pauseStatus = true;
             }
         }
-        else {
-            for (PVector CC : coordinatesList) {
-                minValue = (minValue == null || CC.y < minValue.y) ? CC:minValue;
-            }            
+        if (key == 'r') {
+            waterHeight = minValueZ;
+            timePassed = 0;
         }
-        return minValue;
     }
-    
-    public PVector calculateMax(String type) {
-        PVector maxValue = null;
-        if (type.equals("X")) {
-            for (PVector CC : coordinatesList) {
-                maxValue = (maxValue == null || CC.x > maxValue.x) ? CC:maxValue;
-            }
-        }
-        else {
-            for (PVector CC : coordinatesList) {
-                maxValue = (maxValue == null || CC.y > maxValue.y) ? CC:maxValue;
-            }            
-        }
-        return maxValue;
+    public void calculateMinMax() {
+        minValueX =  coordinatesList
+        .stream()
+        .min((o1, o2) -> Float.compare(o1.x, o2.x))
+        .get()
+        .x;
+        
+        minValueY =  coordinatesList
+        .stream()
+        .min((o1, o2) -> Float.compare(o1.y, o2.y))
+        .get()
+        .y;
+        
+        minValueZ =  coordinatesList
+        .stream()
+        .min((o1, o2) -> Float.compare(o1.z, o2.z))
+        .get()
+        .z;
+                
+        maxValueX =  coordinatesList
+        .stream()
+        .max((o1, o2) -> Float.compare(o1.x, o2.x))
+        .get()
+        .x;
+        
+        maxValueY =  coordinatesList
+        .stream()
+        .max((o1, o2) -> Float.compare(o1.y, o2.y))
+        .get()
+        .y;
+        
+        maxValueZ =  coordinatesList
+        .stream()
+        .max((o1, o2) -> Float.compare(o1.z, o2.z))
+        .get()
+        .z;
+
+        waterHeight = minValueZ;
     }
     
     public void calculateCoordinates(ArrayList<PVector> coordinatesList) {
@@ -178,16 +172,26 @@ public class Main extends PApplet{
     }
     
     public void drawCoordinates(ArrayList<PVector> coordinatesList) {
-//        System.out.println("STARTING DRAWING");
         noStroke();
         for (int i = 0; i < (coordinatesList.size() - 1); i++) {
             int c = color((100 + (coordinatesList.get(i).z * 20)), (100 + (coordinatesList.get(i).z * 20)), (100 + (coordinatesList.get(i).z * 20)));
             fill(c);
             pushMatrix();
             translate((xMap.get(i) - 500f) * scale, (1000f - yMap.get(i) - 500f) * scale, 0);
-            box(2 * scale, 2 * scale, (coordinatesList.get(i).z + 10) * 2*scale);
+            box(2 * scale, 2 * scale, (float) ((coordinatesList.get(i).z + 10) * 2*scale));
             popMatrix();
         }
-//        System.out.println("DONE DRAWING");
+    }
+    
+    public void drawWaterHeight() {
+        if (!pauseStatus && waterHeight <= maxValueZ) {
+            waterHeight+=0.2f;
+            timePassed+=0.4f;
+        }
+        fill(0, 0 , 255, 96);
+        pushMatrix();
+            translate(0, 0, 0);
+            box(1000 * scale, 1000 * scale, (float) (waterHeight + 10) * 2 * scale);
+        popMatrix();
     }
 }
