@@ -6,12 +6,9 @@
 package com.easycode.visualisation_3;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import processing.core.PVector;
 
 /**
@@ -22,8 +19,8 @@ public class CSVParser {
     public ArrayList<PVector> parseCSV(String fileLocation) {
         ArrayList<PVector> returnList = new ArrayList<>();
         String thisLine = null;
-        float schoolLocationX = 92800f;
-        float schoolLocationY = 436955f;
+        float statueLocationX = 92800f;
+        float statueLocationY = 436955f;
         try {
             System.out.println("STARTING");
             BufferedReader br = new BufferedReader(new FileReader(fileLocation));
@@ -35,15 +32,15 @@ public class CSVParser {
                 float Y = Float.parseFloat(lineSplit[1]);
                 float Z = Float.parseFloat(lineSplit[2]);
                 
-                float xABS = (float) Math.abs(schoolLocationX - X);
-                float yABS = (float) Math.abs(schoolLocationY - Y);
+                float xABS = (float) Math.abs(statueLocationX - X);
+                float yABS = (float) Math.abs(statueLocationY - Y);
 
                 if (xABS < 500 && yABS < 500) {
                     PVector CC = new PVector(X, Y, Z);
                     returnList.add(CC);
                 }
             }
-        } catch (Exception ex) {
+        } catch (IOException | NumberFormatException ex) {
             System.out.println(ex);
         }
         System.out.println("DONE");

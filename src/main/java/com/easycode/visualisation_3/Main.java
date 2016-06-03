@@ -15,7 +15,6 @@ import processing.event.MouseEvent;
  * @author Luuk
  */
 public class Main extends PApplet{
-   
     ArrayList<PVector> coordinatesList;
     ArrayList<Float> xMap = new ArrayList<>();
     ArrayList<Float> yMap = new ArrayList<>();
@@ -27,9 +26,9 @@ public class Main extends PApplet{
     float maxValueY; 
     float maxValueZ;
     float scale = 2.0f;
-    float angle = 0;
-    float waterHeight = -5f;
-    float timePassed = 0;
+    float angle = 0f;
+    float waterHeight = 0f;
+    float timePassed = 0f;
     
     public static void main(String[] args) {
         PApplet.main( new String[]{"com.easycode.visualisation_3.Main"} ); 
@@ -39,7 +38,36 @@ public class Main extends PApplet{
     public void settings() {
         size(1000, 1000, P3D);
     }
-    
+
+    @Override
+    public void setup(){
+        background(255);
+        textSize(14);
+        
+        CSVParser newParser = new CSVParser();
+        coordinatesList = newParser.parseCSV("resource/rotterdamopendata_hoogtebestandtotaal_oost.csv");
+
+        calculateMinMax();
+        calculateCoordinates(coordinatesList);
+    }
+
+    @Override
+    public void draw() {
+        clear();
+        lights();           
+       
+        drawHud();
+       
+        translate(width/2, height/2);
+        rotateX(1.2f);
+        rotateZ(angle);
+       
+        pushMatrix();
+        drawCoordinates(coordinatesList);
+        drawWaterHeight();
+        popMatrix();
+    }
+
     @Override
     public void mouseDragged() {
         if (mouseButton == LEFT) {
@@ -58,42 +86,6 @@ public class Main extends PApplet{
     }
     
     @Override
-    public void setup(){
-        background(255);
-        textSize(14);
-        
-        CSVParser newParser = new CSVParser();
-        coordinatesList = newParser.parseCSV("resource/rotterdamopendata_hoogtebestandtotaal_oost.csv");
-
-        calculateMinMax();
-        calculateCoordinates(coordinatesList);
-    }
-
-    @Override
-    public void draw() {
-        clear();
-        lights();
-           
-        fill(255);
-        text("Hold left mouse button and drag to rotate the map", 20, 30);
-        text("Scroll to zoom the map in and out", 20, 50);
-        text("Press s to save a screenshot of the simulation", 390, 30);
-        text("Press p to pause/start the simulation", 730, 30);
-        text("Press r to reset the simulation", 730, 50);
-        text("Paused: " + pauseStatus, 730, 70);
-        text("Water height: " + waterHeight + "m", 730, 90);
-        text("Time passed: " + timePassed + " hours", 730, 110);
-        
-        translate(width/2, height/2);
-        rotateX(1.2f);
-        rotateZ(angle);
-       
-        pushMatrix();
-        drawCoordinates(coordinatesList);
-        drawWaterHeight();
-        popMatrix();
-    }
-
     public void keyPressed() {
         if (key == 'x') {
             scale = 3.0f;
@@ -109,17 +101,26 @@ public class Main extends PApplet{
             saveFrame("screenshot-######.png");
         }
         if (key == 'p') {
-            if (pauseStatus == true) {
-                pauseStatus = false;
-            } else {
-                pauseStatus = true;
-            }
+            pauseStatus = pauseStatus != true;
         }
         if (key == 'r') {
             waterHeight = minValueZ;
             timePassed = 0;
         }
     }
+    
+    public void drawHud() {
+        fill(255);
+        text("Hold left mouse button and drag to rotate the map", 20, 30);
+        text("Scroll to zoom the map in and out", 20, 50);
+        text("Press s to save a screenshot of the simulation", 390, 30);
+        text("Press p to pause/start the simulation", 730, 30);
+        text("Press r to reset the simulation", 730, 50);
+        text("Paused: " + pauseStatus, 730, 70);
+        text("Water height: " + String.format("%.1f", waterHeight) + "m", 730, 90);
+        text("Time passed: " + String.format("%.1f", timePassed) + " hours", 730, 110);
+    }
+  
     public void calculateMinMax() {
         minValueX =  coordinatesList
         .stream()
@@ -161,14 +162,12 @@ public class Main extends PApplet{
     }
     
     public void calculateCoordinates(ArrayList<PVector> coordinatesList) {
-        float xAs = 0.0f;
-        float yAs = 0.0f;
-        for (PVector CC : coordinatesList) {
-            xAs = (float) map(CC.x, minValueX, maxValueX, 0, (1000));
-            yAs = (float) map(CC.y, minValueY, maxValueY, 0, (1000));
+        coordinatesList.stream().forEach((CC) -> {
+            float xAs = (float) map(CC.x, minValueX, maxValueX, 0, (1000));
+            float yAs = (float) map(CC.y, minValueY, maxValueY, 0, (1000));
             xMap.add(xAs);
             yMap.add(yAs);
-        }
+        });
     }
     
     public void drawCoordinates(ArrayList<PVector> coordinatesList) {
@@ -190,8 +189,8 @@ public class Main extends PApplet{
         }
         fill(0, 0 , 255, 96);
         pushMatrix();
-            translate(0, 0, 0);
-            box(1000 * scale, 1000 * scale, (float) (waterHeight + 10) * 2 * scale);
+        translate(0, 0, 0);
+        box(1000 * scale, 1000 * scale, (float) (waterHeight + 10) * 2 * scale);
         popMatrix();
     }
 }
